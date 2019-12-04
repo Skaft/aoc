@@ -1,7 +1,13 @@
 """
-Solving part 2 by letting sympy analyze the intcode program. By passing noun and verb as sympy Symbols, all the additions and multiplications propagates through, finally landing an expression like 288000*x + y + 394702 in the output slot. The task then becomes to find which x and y (noun and verb) that makes that expression evaluate to the target 19690720.
+Solving part 2 by letting sympy analyze the intcode program. By passing noun
+and verb as sympy Symbols, all the additions and multiplications propagates
+through, finally landing an expression like 288000*x + y + 394702 in the output
+slot. The task then becomes to find which x and y (noun and verb) that makes
+that expression evaluate to the target 19690720.
 
-With this approach, only one pass of the intcode program is needed. To solve the final equation, I just noticed that divmod could be used on the coefficients for my input - don't know if that's true in general.
+With this approach, only one pass of the intcode program is needed. To solve
+the final equation, I just noticed that divmod could be used on the
+coefficients for my input - don't know if that's true in general.
 """
 
 from input import data
