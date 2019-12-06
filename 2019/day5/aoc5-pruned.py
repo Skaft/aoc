@@ -16,6 +16,7 @@ be mapping integers to methods/functions using a dict or something.
 from input import data
 from enum import Enum
 from functools import wraps
+from itertools import zip_longest
 
 
 class Opcode(Enum):
@@ -58,21 +59,21 @@ def moded(skip=None):
     def deco(method):
 
         @wraps(method)
-        def wrapper(comp_inst, *args, modes=None):
-            if modes is None or len(modes) < len(args):
-                raise ValueError('Missing parameter modes')
-            pruned_args = []
-            source = comp_inst.program
+        def wrapper(comp_inst, *params, modes=None):
+            if modes is None:
+                modes = []
+            params = list(params)
+            prm_mode_pairs = zip_longest(params, modes, fillvalue=Mode.DEFAULT)
 
-            for i, (arg, mode) in enumerate(zip(args, modes)):
+            for i, (prm, mode) in enumerate(prm_mode_pairs):
                 if i in skip or mode == Mode.IMMEDIATE:
-                    pruned_args.append(arg)
+                    pass
                 elif mode == Mode.POSITION:
-                    pruned_args.append(source[arg])
+                    params[i] = comp_inst.get(prm)
                 else:
                     raise ValueError(f'Unknown parameter mode: {mode}')
 
-            return method(comp_inst, *pruned_args)
+            return method(comp_inst, *params)
 
         # The number of parameters needs to be known before calling, so that
         # the parameters can be read properly. Reading it from the decorated
@@ -155,16 +156,12 @@ class Computer:
             # collect the method matching the opcode
             method = getattr(self, f"_{opcode.name.lower()}")
 
-            # pad the list of parameter modes with default mode if necessary
-            missing_modes = method.param_count - len(param_modes)
-            param_modes.extend([Mode.DEFAULT] * missing_modes)
-
             # collect parameters
             param_start = self.pointer + 1
             next_instr_start = param_start + method.param_count
             params = map(self.get, range(param_start, next_instr_start))
 
-            # (moving pointer first so jump instructions can overwrite it)
+            # moving pointer before calling to not overwrite jump instructions
             self.pointer = next_instr_start
 
             method(*params, modes=param_modes)
