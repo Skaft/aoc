@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import IntEnum
 from functools import wraps
 from itertools import zip_longest
 from collections import deque, defaultdict
 
 
-class Opcode(Enum):
+class Opcode(IntEnum):
     """Names of the opcode methods"""
     ADD = 1
     MUL = 2
@@ -18,7 +18,7 @@ class Opcode(Enum):
     EXIT = 99
 
 
-class ParameterMode(Enum):
+class ParameterMode(IntEnum):
     """Parameter modes recognized by the Computer"""
     POSITION = 0
     IMMEDIATE = 1
@@ -52,14 +52,15 @@ def moded(write=None):
             if modes is None:
                 modes = []
             pruned_params = []
-            prm_mode_pairs = zip_longest(params, modes, fillvalue=Mode.DEFAULT)
-            for i, (prm, mode) in enumerate(prm_mode_pairs):
+            prm_mode_pairs = zip_longest(params,
+                                         modes,
+                                         fillvalue=Mode.DEFAULT.value)
+            for i, (param, mode) in enumerate(prm_mode_pairs):
                 if mode == Mode.RELATIVE:
-                    prm += comp_inst._relative_base
+                    param += comp_inst._relative_base
                 if mode != Mode.IMMEDIATE and i not in write:
-                    prm = comp_inst.get(prm)
-
-                pruned_params.append(prm)
+                    param = comp_inst.get(param)
+                pruned_params.append(param)
 
             return method(comp_inst, *pruned_params)
 
@@ -86,6 +87,11 @@ class Computer:
         self.pointer = pointer
         self._relative_base = 0
 
+        mappings = [(op.value, f"_{op.name.lower()}") for op in Opcode]
+        self._methods = {code: getattr(self, name)
+                        for code, name in mappings
+                        if hasattr(self, name)}
+
     def send(self, value):
         self._input_queue.append(value)
 
@@ -108,6 +114,11 @@ class Computer:
         else:
             mem = self._extra_memory
         return mem[index]
+
+    def read(self):
+        value = self._program[self.pointer]
+        self.pointer += 1
+        return value
 
     @moded()
     def _jump_true(self, n, index):
@@ -151,38 +162,28 @@ class Computer:
     @staticmethod
     def parse_opcode(value):
         """Split a number into opcode and parameter mode components"""
-        modes_int, codepoint = divmod(value, 100)
-        opcode = Opcode(codepoint)
+        modes_int, opcode = divmod(value, 100)
+        # opcode = Opcode(codepoint)
 
         param_modes = []
         while modes_int:
             modes_int, mode = divmod(modes_int, 10)
-            param_modes.append(Mode(mode))
+            param_modes.append(mode)
 
         return opcode, param_modes
 
     def run(self):
         while True:
             # read and parse the value at the pointer
-            points_to = self.get(self.pointer)
-            opcode, param_modes = self.parse_opcode(points_to)
+            opcode, param_modes = self.parse_opcode(self.read())
 
             if opcode == Opcode.EXIT:
                 return True
             if opcode == Opcode.INPUT and not self._input_queue:
                 return False
 
-            # collect the method matching the opcode
-            method = getattr(self, f"_{opcode.name.lower()}")
-
-            # collect parameters
-            param_start = self.pointer + 1
-            next_instr_start = param_start + method.param_count
-            params = map(self.get, range(param_start, next_instr_start))
-
-            # moving pointer before calling to not overwrite jump instructions
-            self.pointer = next_instr_start
-
+            method = self._methods[opcode]
+            params = [self.read() for _ in range(method.param_count)]
             method(*params, modes=param_modes)
 
             # if opcode == Opcode.OUTPUT:
