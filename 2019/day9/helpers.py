@@ -163,12 +163,7 @@ class Computer:
     def parse_opcode(value):
         """Split a number into opcode and parameter mode components"""
         modes_int, opcode = divmod(value, 100)
-        # opcode = Opcode(codepoint)
-
-        param_modes = []
-        while modes_int:
-            modes_int, mode = divmod(modes_int, 10)
-            param_modes.append(mode)
+        param_modes = [int(n) for n in reversed(str(modes_int))]
 
         return opcode, param_modes
 
