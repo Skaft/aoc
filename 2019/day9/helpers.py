@@ -52,10 +52,13 @@ def moded(write=None):
             if modes is None:
                 modes = []
             pruned_params = []
-            prm_mode_pairs = zip_longest(params,
-                                         modes,
-                                         fillvalue=Mode.DEFAULT.value)
-            for i, (param, mode) in enumerate(prm_mode_pairs):
+            param_mode_pairs = zip_longest(
+                params,
+                modes,
+                fillvalue=Mode.DEFAULT.value
+            )
+
+            for i, (param, mode) in enumerate(param_mode_pairs):
                 if mode == Mode.RELATIVE:
                     param += comp_inst._relative_base
                 if mode != Mode.IMMEDIATE and i not in write:
@@ -88,18 +91,17 @@ class Computer:
         self._relative_base = 0
 
         mappings = [(op.value, f"_{op.name.lower()}") for op in Opcode]
-        self._methods = {code: getattr(self, name)
-                        for code, name in mappings
-                        if hasattr(self, name)}
+        self._methods = {
+            code: getattr(self, method_name)
+            for code, method_name in mappings
+            if hasattr(self, method_name)
+        }
 
     def send(self, value):
         self._input_queue.append(value)
 
-    def collect(self, last=False):
+    def collect(self):
         return self._output_queue[-1]
-        # if last:
-        #     return self._output_queue.pop()
-        # return self._output_queue.popleft()
 
     def set(self, index, value):
         if index < self._mem_limit:
@@ -164,22 +166,29 @@ class Computer:
         """Split a number into opcode and parameter mode components"""
         modes_int, opcode = divmod(value, 100)
         param_modes = [int(n) for n in reversed(str(modes_int))]
-
         return opcode, param_modes
 
-    def run(self):
+    def run(self, release_on_output=False):
+        """
+        Run the loaded program.
+
+        Stops either by a halting opcode (True exit) or when requiring missing
+        input (False exit). If release_on_output is True, generating output
+        also prompts a False exit. A False exit indicates that the program is
+        expecting to resume later.
+        """
         while True:
-            # read and parse the value at the pointer
             opcode, param_modes = self.parse_opcode(self.read())
 
             if opcode == Opcode.EXIT:
                 return True
             if opcode == Opcode.INPUT and not self._input_queue:
+                self.pointer -= 1  # move back to retry opcode later
                 return False
 
             method = self._methods[opcode]
             params = [self.read() for _ in range(method.param_count)]
             method(*params, modes=param_modes)
 
-            # if opcode == Opcode.OUTPUT:
-            #     return False
+            if release_on_output and opcode == Opcode.OUTPUT:
+                return False
