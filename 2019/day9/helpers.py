@@ -30,18 +30,20 @@ class ParameterMode(Enum):
 Mode = ParameterMode
 
 
-def moded(skip=None):
+def moded(write=None):
     """
     Decorator for replacing Computer method params according to their mode.
 
-    The optional 'skip' argument can be an int or an iterable of ints, marking
-    (by index) parameters that should not be replaced regardless of their mode.
+    The optional 'write' argument can be an int or an iterable of ints, marking
+    (by index) parameters that intend to write to the program or extra memory.
+    Such parameters are always treated as positions by their methods and
+    therefore do not need replacing here.
     """
 
-    if skip is None:
-        skip = []
-    elif isinstance(skip, int):
-        skip = [skip]
+    if write is None:
+        write = []
+    elif isinstance(write, int):
+        write = [write]
 
     def deco(method):
 
@@ -54,10 +56,9 @@ def moded(skip=None):
             for i, (prm, mode) in enumerate(prm_mode_pairs):
                 if mode == Mode.RELATIVE:
                     prm += comp_inst._relative_base
-                if i in skip or mode == Mode.IMMEDIATE:
-                    pass
-                else:
+                if mode != Mode.IMMEDIATE and i not in write:
                     prm = comp_inst.get(prm)
+
                 pruned_params.append(prm)
 
             return method(comp_inst, *pruned_params)
@@ -118,15 +119,15 @@ class Computer:
         if n == 0:
             self.pointer = index
 
-    @moded(skip=2)
+    @moded(write=2)
     def _add(self, a, b, index):
         self.set(index, a + b)
 
-    @moded(skip=2)
+    @moded(write=2)
     def _mul(self, a, b, index):
         self.set(index, a * b)
 
-    @moded(skip=0)
+    @moded(write=0)
     def _input(self, index):
         value = self._input_queue.popleft()
         self.set(index, value)
@@ -135,11 +136,11 @@ class Computer:
     def _output(self, value):
         self._output_queue.append(value)
 
-    @moded(skip=2)
+    @moded(write=2)
     def _less_than(self, a, b, index):
         self.set(index, a < b)
 
-    @moded(skip=2)
+    @moded(write=2)
     def _equals(self, a, b, index):
         self.set(index, a == b)
 
