@@ -46,9 +46,6 @@ def sort_by_dist(base, sight_lines):
         for asteroids in directions.values():
             asteroids.sort(key=dist, reverse=True)
 
-def sort_clockwise(slopes, side):
-    return sorted(slopes, reverse=side==LEFT)
-
 def count_visibles(ast):
     dirs_per_side = all_sight_lines[ast].values()
     return sum(len(dirs) for dirs in dirs_per_side)
