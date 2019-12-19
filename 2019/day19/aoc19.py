@@ -37,10 +37,9 @@ def part2(string):
         stopx = run_until(stopx, y, 0, program)
         rowranges.append(range(startx, stopx))
         if y > 100:
-            if startx in rowranges[y - 99]:
-                if startx + 99 in rowranges[y - 99]:
-                    print(startx*10_000 + (y - 99))
-                    break
+            if startx + 99 in rowranges[y - 99]:
+                print(startx*10_000 + (y - 99))
+                break
         y += 1
 
 part1(data)
