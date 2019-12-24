@@ -41,23 +41,18 @@ def part1(string):
 def neighbors(x, y, z):
     L, R, U, D = (x-1, y, z), (x+1, y, z), (x, y-1, z), (x, y+1, z)
 
+    # inner group, touching the +1 recursive layer
     if (x, y) == (2, 1):
-        yield from [L, R, U]
-        for xr in range(5):
-            yield (xr, 0, z + 1)
+        yield from [L, R, U, *[(xr, 0, z + 1) for xr in range(5)]]
     elif (x, y) == (2, 3):
-        yield from [L, R, D]
-        for xr in range(5):
-            yield (xr, 4, z + 1)
+        yield from [L, R, D, *[(xr, 4, z + 1) for xr in range(5)]]
     elif (x, y) == (1, 2):
-        yield from [L, U, D]
-        for yr in range(5):
-            yield (0, yr, z + 1)
+        yield from [L, U, D, *[(0, yr, z + 1) for yr in range(5)]]
     elif (x, y) == (3, 2):
-        yield from [R, U, D]
-        for yr in range(5):
-            yield (4, yr, z + 1)
+        yield from [R, U, D, *[(4, yr, z + 1) for yr in range(5)]]
     else:
+
+        # outer group, touching the -1 recursive layer
         if x == 0:
             L = (1, 2, z - 1)
         elif x == 4:
@@ -66,6 +61,7 @@ def neighbors(x, y, z):
             U = (2, 1, z - 1)
         elif y == 4:
             D = (2, 3, z - 1)
+
         yield from (L, R, U, D)
 
 
