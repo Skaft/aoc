@@ -10,10 +10,10 @@ DAY = 4
 
 class PartOne(AoCSolution):
     def clean_input(self, raw_input):
-        pattern = re.compile(r"(\d+)-(\d+),(\d+)-(\d+)")
         pairs = []
         for line in raw_input.splitlines():
-            a, b, c, d = map(int, pattern.search(line).groups())
+            numbers = re.split("[,-]", line)
+            a, b, c, d = map(int, numbers)
             range_pair = ((a, b), (c, d))
             pairs.append(range_pair)
         return pairs
