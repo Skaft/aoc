@@ -57,7 +57,7 @@ class PartTwo(PartOne):
         for direction in moves:
             head = self.move(head, direction)
             prev = head
-            new_tails =[]
+            new_tails = []
             for tail in tails:
                 prev = self.follow(tail, prev)
                 new_tails.append(prev)
