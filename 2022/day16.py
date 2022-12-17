@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass
 from collections import deque
+from itertools import combinations
 
 import pytest
 
@@ -54,26 +55,45 @@ class PartOne(AoCSolution):
                 paths[name] = PartOne.generate_paths_from(name, valves)
         return paths
 
-    def main(self, valves):
-        best = 0
+    def find_combo_scores(self, valves, start_mins):
         paths = self.get_all_paths(valves)
+        combos = {}
         def search(pos, mins_left, on=(), score=0):
             if mins_left <= 0:
                 return
-            nonlocal best
-            if score > best:
-                best = score
+            orderless = frozenset(on)
+            if score > combos.get(orderless, 0):
+                combos[orderless] = score
             for destination, cost in paths[pos].items():
                 if destination in on:
                     continue
                 remains = mins_left - cost - 1
                 valve_score = valves[destination].rate * remains
                 search(destination, remains, on + (destination,), score + valve_score)
-        search("AA", 30)
-        return best
+        search("AA", start_mins)
+        return combos
+
+    def main(self, valves):
+        combos = self.find_combo_scores(valves, start_mins=30)
+        return max(combos.values())
 
 class PartTwo(PartOne):
-    pass
+    def main(self, valves):
+        combos = self.find_combo_scores(valves, start_mins=26)
+        openable = [name for name, valve in valves.items() if valve.rate]
+        best_combined = 0
+        for combo1, score in combos.items():
+            unused = [valve for valve in openable if valve not in combo1]
+            best_other = 0
+            for num in range(1, len(unused) + 1):
+                for combo2 in combinations(unused, num):
+                    score2 = combos.get(frozenset(combo2), 0)
+                    if score2 > best_other:
+                        best_other = score2
+            combined = score + best_other
+            if combined > best_combined:
+                best_combined = combined
+        return best_combined
 
 
 if __name__ == "__main__":
@@ -89,3 +109,11 @@ def test_part1_main():
 def test_part2_main():
     sol = PartTwo(DAY)
     assert sol.run(1) == 1707
+
+def test_part2_combos():
+    sol = PartTwo(DAY)
+    valves = sol.clean_input(sol.raw_test_inputs[0])
+    combos = sol.find_combo_scores(valves, 26)
+    i_open = combos[frozenset(("JJ", "BB", "CC"))]
+    e_open = combos[frozenset(("DD", "HH", "EE"))]
+    assert i_open + e_open == 1707
