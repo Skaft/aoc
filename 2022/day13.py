@@ -10,9 +10,9 @@ DAY = 13
 
 
 class Ordered(IntEnum):
-    FALSE = 0
-    TRUE = 1
-    INDECISIVE = 2
+    TRUE = -1
+    INDECISIVE = 0
+    FALSE = 1
 
 
 class PartOne(AoCSolution):
@@ -62,10 +62,9 @@ class PartTwo(PartOne):
         packets = [packet for pair in pairs for packet in pair]
         packets.extend([[[2]], [[6]]])
         return packets
-    
+
     def main(self, packets):
-        cmp = lambda a, b: [1,-1,0][self.in_order(a, b)]
-        packets.sort(key=cmp_to_key(cmp))
+        packets.sort(key=cmp_to_key(self.in_order))
         a = packets.index([[2]]) + 1
         b = packets.index([[6]]) + 1
         return a * b
@@ -100,9 +99,9 @@ def test_part1_main():
     ]
 )
 def test_part1_inorder(a, b, expected):
+    expected = Ordered.TRUE if expected == True else Ordered.FALSE
     sol = PartOne(DAY)
     assert sol.in_order(a, b) == expected
-
 
 def test_part2_main():
     sol = PartTwo(DAY)
