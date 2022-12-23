@@ -18,7 +18,7 @@ class AoCSolution:
         input_file = f"inputs/day{day}.txt"
 
         with open(input_file) as f:
-            self.raw_true_input, *self.raw_test_inputs = f.read().split("___INPUTSEP___\n")
+            self.raw_true_input, *self.raw_test_inputs = f.read().split("\n___INPUTSEP___\n")
 
     def run(self, input_select: int=1, **kwargs):
         """
