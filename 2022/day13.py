@@ -1,4 +1,5 @@
 from enum import IntEnum
+from functools import cmp_to_key
 
 import pytest
 
@@ -56,7 +57,18 @@ class PartOne(AoCSolution):
 
 
 class PartTwo(PartOne):
-    pass
+    def clean_input(self, raw_input):
+        pairs = super().clean_input(raw_input)
+        packets = [packet for pair in pairs for packet in pair]
+        packets.extend([[[2]], [[6]]])
+        return packets
+    
+    def main(self, packets):
+        cmp = lambda a, b: [1,-1,0][self.in_order(a, b)]
+        packets.sort(key=cmp_to_key(cmp))
+        a = packets.index([[2]]) + 1
+        b = packets.index([[6]]) + 1
+        return a * b
 
 
 if __name__ == "__main__":
@@ -92,6 +104,6 @@ def test_part1_inorder(a, b, expected):
     assert sol.in_order(a, b) == expected
 
 
-# def test_part2_main():
-#     sol = PartTwo(DAY)
-#     assert sol.run(1) == ...
+def test_part2_main():
+    sol = PartTwo(DAY)
+    assert sol.run(1) == 140
