@@ -1,9 +1,17 @@
+from enum import IntEnum
+
 import pytest
 
 from helpers import AoCSolution
 
 
 DAY = 13
+
+
+class Ordered(IntEnum):
+    FALSE = 0
+    TRUE = 1
+    INDECISIVE = 2
 
 
 class PartOne(AoCSolution):
@@ -15,41 +23,44 @@ class PartOne(AoCSolution):
         return pairs
 
     def in_order(self, A, B):
-        a_list = isinstance(A, list)
-        b_list = isinstance(B, list)
-        if not a_list and not b_list:
-            if A < B:
-                return True
-            if A > B:
-                return False
-            return None
-        if not a_list:
+        if not isinstance(A, list):
             return self.in_order([A], B)
-        if not b_list:
+        if not isinstance(B, list):
             return self.in_order(A, [B])
-        if A == B:
-            return None
+
         for a, b in zip(A, B):
-            if (res := self.in_order(a, b)) is not None:
-                return res
-        return len(A) < len(B)
+            if isinstance(a, list) or isinstance(b, list):
+                item_order = self.in_order(a, b)
+            elif a == b:
+                item_order = Ordered.INDECISIVE
+            elif a < b:
+                item_order = Ordered.TRUE
+            else:
+                item_order = Ordered.FALSE
+            if item_order != Ordered.INDECISIVE:
+                return item_order
+
+        if len(A) == len(B):
+            return Ordered.INDECISIVE
+        elif len(A) < len(B):
+            return Ordered.TRUE
+        else:
+            return Ordered.FALSE
 
     def main(self, pairs):
         total = 0
         for i, pair in enumerate(pairs, 1):
-            if self.in_order(*pair):
+            if self.in_order(*pair) == Ordered.TRUE:
                 total += i
         return total
+
 
 class PartTwo(PartOne):
     pass
 
 
-# sol = PartOne(DAY)
-# assert sol.run(1) == 13
-
 if __name__ == "__main__":
-    print(PartOne(DAY).run(0))  # 6283: too low
+    print(PartOne(DAY).run(0))
     print(PartTwo(DAY).run(0))
 
 
@@ -67,18 +78,19 @@ def test_part1_main():
     ([7,7,7,7], [7,7,7], False),
     ([], [3], True),
     ([[[]]], [[]], False),
+    ([1,[2,[3,[4,[5,6,7]]]],8,9], [1,[2,[3,[4,[5,6,0]]]],8,9], False),
     ([[]], [[[]]], True),
     ([[1, 2, 3], 1], [[1, 2, 3], 2], True),
     ([[1, 2, 3], 2], [[1, 2, 3], 1], False),
     ([[1, 2], 2], [[1, 2, 3], 1], True),
     ([[1, 2, 3], 1], [[1, 2], 2], False),
     ([[1, 2, 1], 2], [[1, 2, 3], 1], True),
-    ([1,[2,[3,[4,[5,6,7]]]],8,9], [1,[2,[3,[4,[5,6,0]]]],8,9], False)
     ]
 )
 def test_part1_inorder(a, b, expected):
     sol = PartOne(DAY)
     assert sol.in_order(a, b) == expected
+
 
 # def test_part2_main():
 #     sol = PartTwo(DAY)
