@@ -1,4 +1,5 @@
 from itertools import cycle
+from collections import deque
 
 import pytest
 
@@ -82,19 +83,62 @@ class PartOne(AoCSolution):
             rock = Rock(type_, peak)
             self.drop(rock, jet_pattern, grid)
             peak = max(peak, max(y for x, y in rock.cells) + 1)
-        # self.display(grid)
         return peak
 
 
 
 
 class PartTwo(PartOne):
-    pass
+    def generate_height_diffs(self, jet_pattern):
+        rock_types = cycle(["-", "+", "L", "I", "#"])
+        peak = 0
+        prev = 0
+        grid = set()
+        while True:
+            for _ in range(5):
+                type_ = next(rock_types)
+                rock = Rock(type_, peak)
+                self.drop(rock, jet_pattern, grid)
+                peak = max(peak, max(y for x, y in rock.cells) + 1)
+            yield peak - prev
+            prev = peak
+
+    @staticmethod
+    def sequence_in_list(lst, seq):
+        a = seq[0]
+        target = list(seq)
+        for i, n in enumerate(lst):
+            if n == a:
+                if lst[i:i+len(seq)] == target:
+                    return i
+
+    def calc_height(self, prefix, repeating, blocks):
+        pre_len = len(prefix) * 5
+        rep_len = len(repeating) * 5
+        prefix_height = sum(prefix)
+        full_laps, remains = divmod(blocks - pre_len, rep_len)
+        repeat_height = full_laps * sum(repeating)
+        suffix_height = sum(repeating[:remains // 5])
+        return prefix_height + repeat_height + suffix_height
+
+    def main(self, jet_pattern):
+        height_diffs = self.generate_height_diffs(jet_pattern)
+        N = 30
+        all_diffs = [next(height_diffs) for _ in range(N)]
+        last_N = deque(all_diffs, maxlen=N)
+        for diff in height_diffs:
+            last_N.append(diff)
+            if (i := self.sequence_in_list(all_diffs, last_N)):
+                break
+            all_diffs.append(diff)
+        prefix = all_diffs[:i]
+        repeating = all_diffs[i:-N + 1]
+        return self.calc_height(prefix, repeating, 1_000_000_000_000)
 
 
 if __name__ == "__main__":
     print(PartOne(DAY).run(0))
-#     print(PartTwo(DAY).run(0))
+    print(PartTwo(DAY).run(0))
 
 
 # TESTS
@@ -103,7 +147,6 @@ def test_part1_main():
     sol = PartOne(DAY)
     assert sol.run(1) == 3068
 
-# test_part1_main()
-# def test_part2_main():
-#     sol = PartTwo(DAY)
-#     assert sol.run(1) == ...
+def test_part2_main():
+    sol = PartTwo(DAY)
+    assert sol.run(1) == 1514285714288
