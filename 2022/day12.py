@@ -54,15 +54,13 @@ class PartOne(AoCSolution):
                 queue.append(nb)
         return steplog[end]
 
-    def main(self, inputs):
-        start, end, grid = inputs
+    def main(self, start, end, grid):
         steps = self.dijkstra(start, end)
         return steps
 
 
 class PartTwo(PartOne):
-    def main(self, inputs):
-        _, end, grid = inputs
+    def main(self, start, end, grid):
         best = float("inf")
         for start in grid:
             if start[1] == 0:

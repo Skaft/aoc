@@ -44,8 +44,7 @@ class PartOne(AoCSolution):
             letter = stacks[fro - 1].pop()
             stacks[to - 1].append(letter)
 
-    def main(self, cleaned_input):
-        stacks, moves = cleaned_input
+    def main(self, stacks, moves):
         for move in moves:
             self.make_move(move, stacks)
         top_row = [stack[-1] for stack in stacks if stack != []]
@@ -75,7 +74,7 @@ def test_clean_input():
     sol = PartOne(DAY)
     exp_stacks = [list("ZN"), list("MCD"), ["P"]]
     exp_moves = [(1, 2, 1), (3, 1, 3), (2, 2, 1), (1, 1, 2)]
-    assert sol.test_inputs[0] == (exp_stacks, exp_moves)
+    assert sol.clean_input(sol.raw_test_inputs[0]) == (exp_stacks, exp_moves)
 
 def test_part2_main():
     sol = PartTwo(DAY)
