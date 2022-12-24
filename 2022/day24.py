@@ -136,6 +136,13 @@ def test_part1_main():
     sol = PartOne(DAY)
     assert sol.run(1) == 18
 
+def test_display():
+    sol = PartOne(DAY)
+    raw_grid = sol.raw_test_inputs[0]
+    grid = sol.clean_input(raw_grid)
+    display = sol.display(grid)
+    assert display == raw_grid
+
 def test_part2_main():
     sol = PartTwo(DAY)
     assert sol.run(1) == 18 + 23 + 13
