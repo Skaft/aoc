@@ -10,36 +10,32 @@ class PartOne(AoCSolution):
     def clean_input(self, raw_input):
         grid = {}
         rows = raw_input.splitlines()
-        for r, row in enumerate(rows):
-            for c, item in enumerate(row):
-                if item in ".":
+        for r, row in enumerate(rows, -1):
+            for c, item in enumerate(row, -1):
+                if item in ".E":
                     grid[r, c] = []
-                elif item == "#":
-                    continue
-                else:
+                elif item in "<>^v":
                     grid[r, c] = [item]
         self.dims = r, c
         return grid
 
     def display(self, grid):
         maxr, maxc = self.dims
-        rows = [["."] * (maxc + 1) for _ in range(maxr + 1)]
+        rows = [["."] * (maxc + 2) for _ in range(maxr + 2)]
 
-        for r in range(maxr + 1):
+        for r in range(maxr + 2):
             rows[r][0] = "#"
-            rows[r][maxc] = "#"
+            rows[r][maxc + 1] = "#"
         for c in range(2, maxc + 1):
             rows[0][c] = "#"
-        for c in range(1, maxc - 1):
-            rows[maxr][c] = "#"
+        for c in range(1, maxc):
+            rows[maxr + 1][c] = "#"
 
         for (r, c), items in grid.items():
-            if len(items) == 0:
-                rows[r][c] = "."
-            elif len(items) == 1:
-                rows[r][c] = items[0]
-            else:
-                rows[r][c] = str(len(items))
+            if len(items) == 1:
+                rows[r + 1][c + 1] = items[0]
+            elif len(items) > 1:
+                rows[r + 1][c + 1] = str(len(items))
         rows = ["".join(row) for row in rows]
         return "\n".join(rows)
 
@@ -47,42 +43,25 @@ class PartOne(AoCSolution):
         maxr, maxc = self.dims
         next_grid = {
             (r, c): []
-            for r in range(1, maxr)
-            for c in range(1, maxc)
+            for r in range(maxr)
+            for c in range(maxc)
         }
-        next_grid[0, 1] = []
+        next_grid[-1, 0] = []
         next_grid[maxr, maxc - 1] = []
 
-        LEFT = 1
-        RIGHT = maxc - 1
-        TOP = 1
-        BOTTOM = maxr - 1
+        dirs = {
+            ">": (0, 1),
+            "<": (0, -1),
+            "v": (1, 0),
+            "^": (-1, 0),
+        }
 
         for (r, c), items in grid.items():
             for item in items:
-                if item == ">":
-                    if c == RIGHT:
-                        nb = r, LEFT
-                    else:
-                        nb = r, c + 1
-                elif item == "<":
-                    if c == LEFT:
-                        nb = r, RIGHT
-                    else:
-                        nb = r, c - 1
-                elif item == "^":
-                    if r == TOP:
-                        nb = BOTTOM, c
-                    else:
-                        nb = r - 1, c
-                elif item == "v":
-                    if r == BOTTOM:
-                        nb = TOP, c
-                    else:
-                        nb = r + 1, c
-                else:
-                    continue
-                next_grid[nb].append(item)
+                dr, dc = dirs[item]
+                r2 = (r + dr) % maxr
+                c2 = (c + dc) % maxc
+                next_grid[r2, c2].append(item)
 
         return next_grid
 
@@ -103,9 +82,7 @@ class PartOne(AoCSolution):
             q = new_q
 
     def main(self, grid):
-        start = (0, 1)
-        if grid[start]:
-            grid[start].pop()
+        start = (-1, 0)
         maxr, maxc = self.dims
         goal = maxr, maxc - 1
         steps, grid = self.find_path(start, goal, grid)
@@ -114,9 +91,7 @@ class PartOne(AoCSolution):
 
 class PartTwo(PartOne):
     def main(self, grid):
-        start = (0, 1)
-        if grid[start]:
-            grid[start].pop()
+        start = (-1, 0)
         maxr, maxc = self.dims
         goal = maxr, maxc - 1
         steps_to, grid = self.find_path(start, goal, grid)
