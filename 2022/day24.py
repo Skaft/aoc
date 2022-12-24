@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 import pytest
 
 from helpers import AoCSolution
@@ -83,26 +81,20 @@ class PartOne(AoCSolution):
                     else:
                         nb = r + 1, c
                 else:
-                    # next_grid[r, c].append(item)
                     continue
                 next_grid[nb].append(item)
 
         return next_grid
 
-    def main(self, grid):
-        E = (0, 1)
-        if grid[E]:
-            grid[E].pop()
-        q = {E}
+    def find_path(self, start, goal, grid):
+        q = {start}
         count = 0
-        maxr, maxc = self.dims
-        goal = maxr, maxc - 1
         while True:
             grid = self.move_blizzards(grid)
             new_q = set()
             for (r, c) in q:
                 if (r, c) == goal:
-                    return count
+                    return count, grid
                 for dr, dc in [(-1, 0), (1, 0), (0, 0), (0, 1), (0, -1)]:
                     nb = r + dr, c + dc
                     if len(grid.get(nb, [1])) == 0:
@@ -110,14 +102,32 @@ class PartOne(AoCSolution):
             count += 1
             q = new_q
 
+    def main(self, grid):
+        start = (0, 1)
+        if grid[start]:
+            grid[start].pop()
+        maxr, maxc = self.dims
+        goal = maxr, maxc - 1
+        steps, grid = self.find_path(start, goal, grid)
+        return steps
+
 
 class PartTwo(PartOne):
-    pass
+    def main(self, grid):
+        start = (0, 1)
+        if grid[start]:
+            grid[start].pop()
+        maxr, maxc = self.dims
+        goal = maxr, maxc - 1
+        steps_to, grid = self.find_path(start, goal, grid)
+        steps_back, grid = self.find_path(goal, start, grid)
+        steps_to_2, grid = self.find_path(start, goal, grid)
+        return steps_to + steps_back + steps_to_2 + 2
 
 
 if __name__ == "__main__":
     print(PartOne(DAY).run(0))
-#     print(PartTwo(DAY).run(0))
+    print(PartTwo(DAY).run(0))
 
 
 # TESTS
@@ -126,7 +136,6 @@ def test_part1_main():
     sol = PartOne(DAY)
     assert sol.run(1) == 18
 
-# test_part1_main()
-# def test_part2_main():
-#     sol = PartTwo(DAY)
-#     assert sol.run(1) == ...
+def test_part2_main():
+    sol = PartTwo(DAY)
+    assert sol.run(1) == 18 + 23 + 13
