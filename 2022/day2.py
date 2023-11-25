@@ -27,8 +27,7 @@ class PartOne(AoCSolution):
 
         return shape_score + outcome_score
 
-    def main(self, cleaned_input):
-        opponent_list, you_list = cleaned_input
+    def main(self, opponent_list, you_list):
         games = zip(opponent_list, you_list)
         total = sum(self.score(opp, you) for opp, you in games)
         return total

@@ -18,12 +18,9 @@ class AoCSolution:
         input_file = f"inputs/day{day}.txt"
 
         with open(input_file) as f:
-            self.raw_true_input, *self.raw_test_inputs = f.read().split("___INPUTSEP___\n")
+            self.raw_true_input, *self.raw_test_inputs = f.read().split("\n___INPUTSEP___\n")
 
-        self.true_input = self.clean_input(self.raw_true_input)
-        self.test_inputs = [self.clean_input(test) for test in self.raw_test_inputs]
-
-    def run(self, input_select: int=1):
+    def run(self, input_select: int=1, **kwargs):
         """
         Run solution on the specified input.
 
@@ -33,11 +30,14 @@ class AoCSolution:
         ...
         """
         if input_select == 0:
-            cleaned_input = self.true_input
+            raw_input = self.raw_true_input
         else:
-            cleaned_input = self.test_inputs[input_select - 1]
+            raw_input = self.raw_test_inputs[input_select - 1]
 
-        return self.main(cleaned_input)
+        args = self.clean_input(raw_input)
+        if isinstance(args, tuple):
+            return self.main(*args, **kwargs)
+        return self.main(args, **kwargs)
 
     def clean_input(self, raw_input):
         """
