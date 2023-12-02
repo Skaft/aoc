@@ -60,4 +60,5 @@ def test_part2_gives_correct_result_on_test_input():
     assert PartTwo(test_inputs[1]).main() == 281
 
 def test_part2_handles_overlapping_words():
-    assert PartTwo("2abcdoneight").main() == 28
+    assert PartTwo("").extract_digits("2abcdoneight") == ["2", "1", "8"]
+    # assert PartTwo("2abcdoneight").main() == 28
