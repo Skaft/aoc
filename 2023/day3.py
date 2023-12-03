@@ -96,7 +96,7 @@ def test_part1_gives_correct_result_on_test_input():
 
 def test_numbers_are_found_with_line_number():
     input_ = "..12.\n.4.23"
-    output = PartOne.locate_all(PartNumber.pattern, input_, int)
+    output = PartOne.locate_all(r"\d+", input_, int)
 
     assert len(output) == 3
     exp = {
