@@ -70,13 +70,13 @@ class PartTwo(PartOne):
     def main(self):
         min_loc = float("inf")
 
-        for i, table in enumerate(self.tables):
+        for table_index, table in enumerate(self.tables):
             boundaries = table.source_column
             for number in boundaries:
-                location = self.go_downstream(number, i)
+                location = self.go_downstream(number, table_index)
                 if location >= min_loc:
                     continue
-                seed = self.go_upstream(number, i)
+                seed = self.go_upstream(number, table_index)
                 if self.has_seed(seed):
                     min_loc = location
 
