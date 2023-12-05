@@ -94,8 +94,9 @@ def test_input_is_parsed_correctly():
     sol = PartOne(test_inputs[0])
     assert sol.seeds == [79, 14, 55, 13]
     expected_soil = [81, 14, 57, 13]
+    seed_to_soil = sol.tables[0]
     for seed, soil in zip(sol.seeds, expected_soil):
-        assert sol.convert("seed-to-soil", seed) == soil
+        assert seed_to_soil.convert(seed) == soil
 
 def test_part1_gives_correct_result_on_test_input():
     assert PartOne(test_inputs[0]).main() == 35
