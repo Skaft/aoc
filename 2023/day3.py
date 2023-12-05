@@ -40,13 +40,14 @@ class PartOne:
     def main(self):
 
         total = 0
-
+        partnums = []
         for position, part_num in self.part_numbers.items():
             neighbors = self.neighbors_of(position, width=len(str(part_num)))
             if any(neighbor in self.symbols for neighbor in neighbors):
+                partnums.append(part_num)
                 total += part_num
 
-        return total
+        return sum(partnums)
 
 
 class Gear(str):
@@ -105,6 +106,20 @@ def test_numbers_are_found_with_line_number():
         (1, 3): 23,
     }
     assert output == exp
+
+def test_more_than_9_neighbors_can_be_generated():
+    """
+    Given the position of '1' and the width (3), check that all neighbors are produced
+       .....
+       .123.
+       .....
+    """
+    pos = (1, 1)
+    exp_neighbors = {(r, c) for r in range(3) for c in range(5)}
+
+    neighbors = set(PartOne.neighbors_of(pos, width=3))
+    
+    assert neighbors == exp_neighbors
 
 def test_part2_gives_correct_result_on_test_input():
     assert PartTwo(test_inputs[0]).main() == 467835
