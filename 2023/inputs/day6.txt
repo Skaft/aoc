@@ -1,0 +1,5 @@
+Time:        59     68     82     74
+Distance:   543   1020   1664   1022
+___INPUTSEP___
+Time:      7  15   30
+Distance:  9  40  200
