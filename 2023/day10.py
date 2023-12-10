@@ -3,8 +3,19 @@ with open("inputs/day10.txt") as f:
 
 
 class PartOne:
+    dir_to_diff = {
+        "N": (-1, 0),
+        "S": (1, 0),
+        "E": (0, 1),
+        "W": (0, -1),
+    }
+    diff_to_dir = {diff: dir for dir, diff in dir_to_diff.items()}
+    direction_opposites = dict(zip("NSEW", "SNWE"))
+
     def __init__(self, raw_input):
         self.raw_input = raw_input
+        self.pipe = []
+        self.pipe_set = set()
         self.tiles = {}
         charmap = {
             "L": "NE",
@@ -23,42 +34,50 @@ class PartOne:
                 else:
                     self.tiles[r, c] = charmap[char]
 
-        # connect start
-        r,c = self.start
+        # fill start position with correct pipe directions
+        r, c = self.start
         dirs = ""
-        if "S" in self.tiles.get((r - 1, c), ""):
-            dirs += "N"
-        if "W" in self.tiles.get((r, c + 1), ""):
-            dirs += "E"
-        if "N" in self.tiles.get((r + 1, c), ""):
-            dirs += "S"
-        if "E" in self.tiles.get((r, c - 1), ""):
-            dirs += "W"
+        for dir in "NESW":
+            dr, dc = self.dir_to_diff[dir]
+            opposite = self.direction_opposites[dir]
+            if opposite in self.tiles.get((r + dr, c + dc), ""):
+                dirs += dir
         self.tiles[self.start] = dirs
 
-    def is_connected(self, node1, node2):
-        if node1 not in self.tiles or node2 not in self.tiles:
-            return False
+    def move_along_pipe(self, node, direction):
+        # take one step in given direction
+        r, c = node
+        dr, dc = self.dir_to_diff[direction]
+        next_node = (r + dr, c + dc)
 
-        diff_r = node2[0] - node1[0]
-        diff_c = node2[1] - node1[1]
-        if abs(diff_c) + abs(diff_r) != 1:
-            return False
+        # fetch the direction that isn't backwards
+        backward_dir = self.direction_opposites[direction]
+        dirs = self.tiles[next_node]
+        next_direction = dirs[1 - dirs.index(backward_dir)]
 
-        c1 = self.tiles[node1]
-        c2 = self.tiles[node2]
+        return next_node, next_direction
 
-        if diff_r == 1 and "S" in c1 and "N" in c2:
-            return True
-        if diff_r == -1 and "N" in c1 and "S" in c2:
-            return True
-        if diff_c == 1 and "E" in c1 and "W" in c2:
-            return True
-        if diff_c == -1 and "W" in c1 and "E" in c2:
-            return True
+    def find_pipe(self):
+        """Starting at start position, move one lap along the pipe and store the path taken"""
+        self.pipe = [self.start]
+        direction = self.tiles[self.start][0]
 
-        return False
+        while True:
+            node = self.pipe[-1]
+            next_node, direction = self.move_along_pipe(node, direction)
 
+            if next_node == self.start:
+                self.pipe_set = set(self.pipe)
+                return
+
+            self.pipe.append(next_node)
+
+    def main(self):
+        self.find_pipe()
+        return len(self.pipe) // 2
+
+
+class PartTwo(PartOne):
     def neighbors_of(self, node):
         r, c = node
         yield r + 1, c
@@ -66,73 +85,54 @@ class PartOne:
         yield r, c + 1
         yield r, c - 1
 
-    def find_path(self):
-        self.path = [self.start]
-        visited = set()
-
-        while True:
-            node = self.path[-1]
-            visited.add(node)
-            for nb in self.neighbors_of(node):
-                if nb == self.start:
-                    if len(self.path) < 3:
-                        continue
-                    if self.is_connected(node, self.start):
-                        return
-                if nb in visited:
-                    continue
-                if self.is_connected(node, nb):
-                    self.path.append(nb)
-                    break
-
-    def main(self):
-        self.find_path()
-        return len(self.path) // 2
-
-
-class PartTwo(PartOne):
-    def flood_fill(self):
+    def generate_cell_groups(self):
         self.height = len(self.raw_input.splitlines())
         self.width = len(self.raw_input.splitlines()[0])
-        cells = {(r, c) for r in range(self.height) for c in range(self.width)}
+        ungrouped_cells = {
+            (r, c)
+            for r in range(self.height)
+            for c in range(self.width)
+            if (r, c) not in self.pipe_set
+        }
 
-        for cell in self.path:
-            cells.remove(cell)
-        
-        areas = []
-        while cells:
-            origin = cells.pop()
-            q = {origin}
-            area = {origin}
-            while q:
-                node = q.pop()
-                for nb in self.neighbors_of(node):
-                    if nb in cells:
-                        cells.remove(nb)
-                        area.add(nb)
-                        q.add(nb)
-            areas.append(area)
-        return areas
+        # build groups of adjacent cells using flood-fill
+        groups = []
+        while ungrouped_cells:
+            group_origin = ungrouped_cells.pop()
+            unexpanded_cells = {group_origin}
+            group = {group_origin}
 
-    def count_layers(self, area):
-        R, c = min(area)
+            while unexpanded_cells:
+                cell = unexpanded_cells.pop()
+                for neighbor in self.neighbors_of(cell):
+                    if neighbor in ungrouped_cells:
+                        ungrouped_cells.remove(neighbor)
+                        group.add(neighbor)
+                        unexpanded_cells.add(neighbor)
 
-        pipe_cells_above = [(r, c) for r in range(R, -1, -1) if (r, c) in self.path]
-        dirs_above = "".join(self.tiles[r, c] for r, c in pipe_cells_above)
+            groups.append(group)
+        return groups
+
+    def count_layers(self, group):
+        """Count how many 'layers' of pipe pass around the group"""
+        R, c = min(group)
+
+        pipe_cells_above = [(r, c) for r in range(R, -1, -1) if (r, c) in self.pipe_set]
+        dirs_above = "".join(self.tiles[cell] for cell in pipe_cells_above)
 
         return min(dirs_above.count("E"), dirs_above.count("W"))
 
     def main(self):
-        self.find_path()
-        areas = self.flood_fill()
+        self.find_pipe()
+        groups = self.generate_cell_groups()
 
         total = 0
-
-        for area in areas:
-            if self.count_layers(area) % 2 == 1:
-                total += len(area)
+        for group in groups:
+            if self.count_layers(group) % 2 == 1:
+                total += len(group)
 
         return total
+
 
 if __name__ == "__main__":
 
@@ -146,14 +146,16 @@ if __name__ == "__main__":
 def test_part1_main():
     assert PartOne(test_inputs[0]).main() == 8
 
+
 def test_part2_main():
     assert PartTwo(test_inputs[1]).main() == 4
     assert PartTwo(test_inputs[2]).main() == 8
     assert PartTwo(test_inputs[3]).main() == 10
 
+
 def test_find_areas():
     sol = PartTwo(test_inputs[2])
-    sol.find_path()
-    areas = sol.flood_fill()
+    sol.find_pipe()
+    areas = sol.generate_cell_groups()
     sizes = sorted([len(area) for area in areas])
-    assert sizes == [1,1,1,1,1,2,2,3,5,7,15,21]
+    assert sizes == [1, 1, 1, 1, 1, 2, 2, 3, 5, 7, 15, 21]
