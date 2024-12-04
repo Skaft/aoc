@@ -46,20 +46,31 @@ def part1(data):
 
 def part2(data):
     grid = parse(data)
-    locations = word_search(grid, "MAS")
+
+    a_locations = [pos for pos, char in grid.items() if char == "A"]
 
     count = 0
-    for (pos1, dir1), (pos2, dir2) in itertools.combinations(locations, 2):
-        x1, y1 = pos1
-        x2, y2 = pos2
-        dists = (abs(x1 - x2), abs(y1 - y2))
-        if dists == (0, 2) or dists == (2, 0):
-            dx1, dy1 = dir1
-            dx2, dy2 = dir2
-            A1 = x1 + dx1, y1 + dy1
-            A2 = x2 + dx2, y2 + dy2
-            if A1 == A2:
-                count += 1
+    for x, y in a_locations:
+        opposite_m = False
+        last_m = None
+        m = 0
+        s = 0
+        for dx, dy in [(-1, 1), (-1, -1), (1, 1), (1, -1)]:
+            char = grid.get((x + dx, y + dy))
+            if char == "M":
+                m += 1
+                if last_m is None:
+                    last_m = (dx, dy)
+                elif dx == -last_m[0] and dy == -last_m[1]:
+                    opposite_m = True
+                    break
+            elif char == "S":
+                s += 1
+            else:
+                break
+        if m == s == 2 and not opposite_m:
+            count += 1
+
     return count
 
 
@@ -75,6 +86,6 @@ if __name__ == "__main__":
     
     with open(data_path) as file:
         data = file.read()
-    
+
     print(part1(data))
     print(part2(data))
