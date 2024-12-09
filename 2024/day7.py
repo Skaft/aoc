@@ -83,17 +83,9 @@ def part2(data):
     
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process some input file.")
-    parser.add_argument("--test", action="store_true", help="Run with test data")
-    args = parser.parse_args()
+    from common import get_input
 
-    if args.test:
-        data_path = "test_data/day7.txt"
-    else:
-        data_path = "inputs/day7.txt"
-
-    with open(data_path) as file:
-        data = file.read()
+    data = get_input(day=7)
 
     print(part1(data))
     print(part2(data))
